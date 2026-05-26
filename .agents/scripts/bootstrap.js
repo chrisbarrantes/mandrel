@@ -238,15 +238,16 @@ export const SECTIONS = Object.freeze([
   },
   {
     name: 'github',
-    render: (r) =>
-      r.github
-        ? [
-            `  github.labels          created=${r.github.labels.created.length} skipped=${r.github.labels.skipped.length}`,
-            `  github.project         ${r.github.project.projectNumber ?? 'skipped'}`,
-            `  github.branchProtection ${r.github.branchProtection.status ?? 'n/a'}`,
-            `  github.mergeMethods    ${r.github.mergeMethods.status ?? 'n/a'}`,
-          ]
-        : ['  github                 skipped'],
+    render: (r) => {
+      if (!r.github) return ['  github                 skipped'];
+      if (r.github.error) return [`  github                 error: ${r.github.error}`];
+      return [
+        `  github.labels          created=${r.github.labels.created.length} skipped=${r.github.labels.skipped.length}`,
+        `  github.project         ${r.github.project.projectNumber ?? 'skipped'}`,
+        `  github.branchProtection ${r.github.branchProtection.status ?? 'n/a'}`,
+        `  github.mergeMethods    ${r.github.mergeMethods.status ?? 'n/a'}`,
+      ];
+    },
   },
 ]);
 
