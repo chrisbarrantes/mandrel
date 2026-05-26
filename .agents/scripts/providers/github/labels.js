@@ -36,10 +36,20 @@ export function isLabelAlreadyExistsError(err) {
   if (!err) return false;
   const message = err?.message ?? '';
   const stderr = err?.stderr ?? '';
-  // CLI shape: `! Label "<name>" already exists` (with or without the
-  // leading `!`/`Label ` prefix on older gh versions).
-  if (/label\s+["']?[^"']+["']?\s+already exists/i.test(stderr)) return true;
-  if (/label\s+["']?[^"']+["']?\s+already exists/i.test(message)) return true;
+  
+  /** REPLACED
+  *
+  * // CLI shape: `! Label "<name>" already exists` (with or without the
+  * // leading `!`/`Label ` prefix on older gh versions).
+  * if (/label\s+["']?[^"']+["']?\s+already exists/i.test(stderr)) return true;
+  * if (/label\s+["']?[^"']+["']?\s+already exists/i.test(message)) return true;
+  */ 
+  
+  // CLI shape (older gh): `! Label "<name>" already exists`
+  // CLI shape (gh ≥2.92): `label with name "<name>" already exists`
+  if (/label\b.*\balready exists/i.test(stderr)) return true;
+  if (/label\b.*\balready exists/i.test(message)) return true;
+  
   // REST API shape: 422 + `already_exists` code in the error body.
   if (/already_exists/i.test(stderr) || /already_exists/i.test(message)) {
     return true;
