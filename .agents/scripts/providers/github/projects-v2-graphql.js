@@ -8,7 +8,11 @@
  */
 import { execSync } from 'node:child_process';
 
-const Q_OWNER = `query($login:String!){user(login:$login){id} organization(login:$login){id}}`;
+// The lookupProject function already handles this correctly by trying user and organization in separate queries. I need to apply the same pattern to resolveOrCreateProject.
+// const Q_OWNER = `query($login:String!){user(login:$login){id} organization(login:$login){id}}`;
+const Q_USER_ID = `query($login:String!){user(login:$login){id}}`;
+const Q_ORG_ID = `query($login:String!){organization(login:$login){id}}`;
+
 const Q_PROJ = (s, f) =>
   `query($owner:String!,$number:Int!){${s}(login:$owner){projectV2(number:$number){${f}}}}`;
 const M_PROJ = `mutation($ownerId:ID!,$title:String!){createProjectV2(input:{ownerId:$ownerId,title:$title}){projectV2{id number}}}`;
@@ -110,6 +114,17 @@ async function lookupProject(ctx, fragment, strict = false) {
   return null;
 }
 
+// Now add the resolveOwnerId helper (before resolveOrCreateProject) and update the call site:
+async function resolveOwnerId(ctx, login) {
+  for (const [query, key] of [[Q_USER_ID, 'user'], [Q_ORG_ID, 'organization']]) {
+    try {
+      const d = await gql(ctx, query, { login });
+      if (d?.[key]?.id) return d[key].id;
+    } catch {}
+  }
+  return null;
+}
+
 export async function resolveOrCreateProject(ctx, opts = {}) {
   const owner = opts.owner ?? ctx.projectOwner;
   const name = opts.name ?? ctx.projectName ?? `${ctx.repo} — Mandrel`;
@@ -132,9 +147,13 @@ export async function resolveOrCreateProject(ctx, opts = {}) {
       `[GitHubProvider] Project #${ctx.projectNumber} not found for ${owner}.`,
     );
   }
-  try {
-    const o = await gql(ctx, Q_OWNER, { login: owner });
-    const ownerId = o?.organization?.id ?? o?.user?.id;
+
+  // Now replace the Q_OWNER call in resolveOrCreateProject with the new helper:
+  //try {
+    // const o = await gql(ctx, Q_OWNER, { login: owner });
+    // const ownerId = o?.organization?.id ?? o?.user?.id;
+  try {  
+    const ownerId = await resolveOwnerId(ctx, owner);
     if (!ownerId)
       throw new Error(
         `[GitHubProvider] Could not resolve owner node id for "${owner}".`,
