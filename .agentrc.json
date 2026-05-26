@@ -12,11 +12,11 @@
     }
   },
   "github": {
-    "owner": "dsj1984",
+    "owner": "chrisbarrantes",
     "repo": "mandrel",
-    "projectNumber": 1,
-    "projectOwner": "dsj1984",
-    "operatorHandle": "@dsj1984",
+    "projectNumber": 4,
+    "projectOwner": "chrisbarrantes",
+    "operatorHandle": "@chrisbarrantes",
     "branchProtection": {
       "requiredChecks": [
         { "name": "lint", "cmd": ["npm", "run", "lint"] },
